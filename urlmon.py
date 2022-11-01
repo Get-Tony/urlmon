@@ -20,8 +20,10 @@ from time import perf_counter, sleep
 import requests
 from requests.adapters import HTTPAdapter, Retry
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("URLMonitor")
+logging.basicConfig(
+    format='%(asctime)s %(levelname)s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
 
 URL_FILE = "urls.txt"
 SLEEP_TIME = 10
@@ -33,40 +35,40 @@ RETRY_FOR_STATUS_CODES = (500, 502, 503, 504)
 def main():
     if len(sys.argv) > 1:
         URL_LIST = sys.argv[1:]
-        logger.info("Using provided arguments: %s", URL_LIST)
+        logging.info("Using provided arguments: %s", URL_LIST)
     else:
-        logger.info("No URL arguments provided.")
-        logger.debug("Checking working directory for '%s'.", URL_FILE)
+        logging.info("No URL arguments provided.")
+        logging.debug("Checking working directory for '%s'.", URL_FILE)
         URL_LIST = read_url_file()
-        logger.info("Using '%s' found in working directory.", URL_FILE)
+        logging.info("Using '%s' found in working directory.", URL_FILE)
 
     while True:
-        logger.debug("Starting URL checks.")
+        logging.debug("Starting URL checks.")
         for i in range(len(URL_LIST)):
             start = perf_counter()
             try:
                 response = session.get(URL_LIST[i])
             except requests.exceptions.ConnectionError as conn_err:
-                logger.error("[%s] Connection error to: %s", i, URL_LIST[i])
+                logging.error("[%s] Connection error to: %s", i, URL_LIST[i])
                 continue
             end = perf_counter()
             elapsed_time = f"{end - start:.3f}s"
             if response is not None:
                 if response.status_code == 200:
-                    logger.info(
+                    logging.info(
                         '[%s] %s is up. Elapsed time: %s', i, URL_LIST[i], elapsed_time)
                 else:
-                    logger.warn(
+                    logging.warn(
                         '[%s] %s is up but not OK. Status code: %s. Elapsed time: %s', i, URL_LIST[i], response.status_code, elapsed_time)
             else:
-                logger.error(
+                logging.error(
                     '[%s] %s might be down! Elapsed time: %s', i, URL_LIST[i], elapsed_time)
         sleep(SLEEP_TIME)
 
 
 def read_url_file():
     if not os.path.isfile(URL_FILE):
-        logger.error("'%s' not found. Exiting.", URL_FILE)
+        logging.error("'%s' not found. Exiting.", URL_FILE)
         sys.exit(0)
     urls_from_file = []
     with open(URL_FILE, "r", encoding='UTF-8') as url_file:
@@ -120,7 +122,7 @@ if __name__ == "__main__":
         ) as session:
             main()
     except KeyboardInterrupt:
-        logger.info("Keyboard Interrupt detected.")
+        logging.info("Keyboard Interrupt detected.")
     finally:
-        logger.info("Exiting.")
+        logging.info("Exiting.")
         sys.exit(0)
